@@ -1,0 +1,3 @@
+dir: /var/log/test
+files: ["lol.log"]
+limit: 7
