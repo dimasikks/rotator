@@ -16,7 +16,7 @@ for simpleConfig in rotatorConfigsDir.iterdir():
             dir = rotatorConfig["dir"]
             fileNames = rotatorConfig["files"]
             limit = rotatorConfig["limit"]
-
+            threshold = rotatorConfig["threshold"]
 
             for fileName in fileNames:
                 files = getFiles(dir, fileName)
@@ -25,11 +25,11 @@ for simpleConfig in rotatorConfigsDir.iterdir():
                     fileCount = fileCounter(dir, file)
                     if fileCount == limit:
                         fileCount = updateFileCount(dir, file)
-                        rotateLogs(dir, file, fileCount)
+                        rotateLogs(dir, file, fileCount, threshold)
                     elif fileCount > limit:
                         deleteOldLogs(dir, file, fileCount, limit)
                         fileCount = updateFileCount(dir, file)
-                        rotateLogs(dir, file, fileCount)
+                        rotateLogs(dir, file, fileCount, threshold)
                     else:
                         fileCount+=1
-                        rotateLogs(dir, file, fileCount)
+                        rotateLogs(dir, file, fileCount, threshold)

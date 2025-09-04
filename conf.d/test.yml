@@ -1,3 +1,4 @@
 dir: /var/log/test
-files: ["lol.log"]
+files: ["*.log"]
 limit: 3
+threshold: "10k"

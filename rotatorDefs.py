@@ -41,9 +41,15 @@ def updateFileCount(dir, file):
     result = subprocess.run(findOldLogsCommand, cwd=dir, **args)
     return int(result.stdout)
 
-def rotateLogs(dir, file, fileCount):
-    rotateCommand = f'''find . -type f -name "{file}" -exec bash -c 'gzip -c \"$1\" > \"$1.{fileCount}.gz\"; echo 1 > \"$1\"' '''
+def rotateLogs(dir, file, fileCount, threshold):
+    rotateCommand = f'''find . -type f -name "{file}" '''
+    rotateCommandExec = f''' -exec bash -c 'gzip -c \"$1\" > \"$1.{fileCount}.gz\"; echo 1 > \"$1\"' '''
     rotateCommandAppender = r''' _ {} \; '''
-    rotateFinalCommand = rotateCommand + rotateCommandAppender
+
+    if threshold != "":
+        rotateCommandSize = f''' -size +{threshold} '''
+        rotateFinalCommand = rotateCommand + rotateCommandSize + rotateCommandExec + rotateCommandAppender
+    else:
+        rotateFinalCommand = rotateCommand + rotateCommandExec + rotateCommandAppender
 
     result = subprocess.run(rotateFinalCommand, cwd=dir, **args)
