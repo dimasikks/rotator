@@ -1,38 +1,49 @@
 import subprocess
 import string
 
+args = { "capture_output":True, "text": True, "shell": True }
+
+def getFiles(dir, fileName):
+    getFilesCommand = f''' ls {fileName}'''
+
+    result = subprocess.run(getFilesCommand, cwd=dir, **args).stdout.strip().split('\n')
+    return result
+
 def fileCounter(dir, file):
-    args = { "capture_output":True, "text": True, "cwd": dir, "shell": True }
-
-    command = []
     countCommand = f''' ls {file}.*.gz 2>/dev/null | wc -l'''
-    command.append(countCommand)
 
-    result = subprocess.run(command, **args)
-    del command
-
+    result = subprocess.run(countCommand, cwd=dir, **args)
     return int(result.stdout)
 
-def updateFileCount(dir, file):
-    args = { "capture_output":True, "text": True, "cwd": dir, "shell": True }
+def deleteOldLogs(dir, file, fileCount, limit):
+    extraFilesCount = fileCount - limit
+    checkExtraFilesCommand = f''' ls -r {file}.*.gz | head -n {extraFilesCount} '''
 
-    command = []
+    extraFiles = subprocess.run(checkExtraFilesCommand, cwd=dir, **args).stdout.strip().split('\n')
+
+    getOldFilesCommand = f''' ls {file}.*.gz | head -n {limit} '''
+
+    oldFiles = subprocess.run(getOldFilesCommand, cwd=dir, **args).stdout.strip().split('\n')
+    
+    for oldFile in oldFiles:
+        if len(extraFiles) != 0:
+            extraFile = extraFiles.pop()
+            rewriteOldFileCommand = f''' mv {extraFile} {oldFile} '''
+            subprocess.run(rewriteOldFileCommand, cwd=dir, **args)
+        else:
+            break
+            
+def updateFileCount(dir, file):
     findOldLogs = f''' ls -rt {file}.*.gz | head -n 1 |'''
     findOldLogsAppender = r''' awk -F '.' '{print$(NF-1)}' '''
-    command.append(findOldLogs + findOldLogsAppender)
+    findOldLogsCommand = findOldLogs + findOldLogsAppender
 
-    result = subprocess.run(command, **args)
-    del command
-
+    result = subprocess.run(findOldLogsCommand, cwd=dir, **args)
     return int(result.stdout)
 
 def rotateLogs(dir, file, fileCount):
-    args = { "capture_output":True, "text": True, "cwd": dir, "shell": True }
-    
-    command = []
     rotateCommand = f'''find . -type f -name "{file}" -exec bash -c 'gzip -c \"$1\" > \"$1.{fileCount}.gz\"; echo 1 > \"$1\"' '''
     rotateCommandAppender = r''' _ {} \; '''
-    command.append(rotateCommand + rotateCommandAppender)
+    rotateFinalCommand = rotateCommand + rotateCommandAppender
 
-    result = subprocess.run(command, **args)
-    del command
+    result = subprocess.run(rotateFinalCommand, cwd=dir, **args)

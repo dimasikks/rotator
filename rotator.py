@@ -14,13 +14,22 @@ for simpleConfig in rotatorConfigsDir.iterdir():
                 rotatorConfig = yaml.safe_load(simpleRotator)
             
             dir = rotatorConfig["dir"]
-            files = rotatorConfig["files"]
+            fileNames = rotatorConfig["files"]
             limit = rotatorConfig["limit"]
 
-            for file in files:
-                fileCount = fileCounter(dir, file)
-                if fileCount == limit:
-                    fileCount = updateFileCount(dir, file)
-                    rotateLogs(dir, file, fileCount)
-                else:
-                    rotateLogs(dir, file, fileCount+1)
+
+            for fileName in fileNames:
+                files = getFiles(dir, fileName)
+
+                for file in files:
+                    fileCount = fileCounter(dir, file)
+                    if fileCount == limit:
+                        fileCount = updateFileCount(dir, file)
+                        rotateLogs(dir, file, fileCount)
+                    elif fileCount > limit:
+                        deleteOldLogs(dir, file, fileCount, limit)
+                        fileCount = updateFileCount(dir, file)
+                        rotateLogs(dir, file, fileCount)
+                    else:
+                        fileCount+=1
+                        rotateLogs(dir, file, fileCount)
